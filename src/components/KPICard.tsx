@@ -21,6 +21,12 @@ export function KPICard({ title, value, unit, subtitle, icon }: KPICardProps) {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
+        transition: 'border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease',
+        '&:hover': {
+          borderColor: '#BFDBFE',
+          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
+          transform: 'translateY(-2px)',
+        },
       }}
     >
       <Stack
