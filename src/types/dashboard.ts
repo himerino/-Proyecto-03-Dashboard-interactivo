@@ -2,7 +2,7 @@ export type ProductCategory = 'Beauty' | 'Clothing' | 'Electronics';
 
 export interface TransactionRecord {
   transactionId: number;
-  date: string; // Formato YYYY-MM-DD
+  date: string;
   customerId: string;
   gender: 'Male' | 'Female';
   age: number;
@@ -18,6 +18,7 @@ export interface MonthlyRevenuePoint {
   Clothing: number;
   Electronics: number;
   isPartial?: boolean;
+  partialDays?: number;
 }
 
 export interface CategorySummary {

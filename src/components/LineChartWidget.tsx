@@ -1,4 +1,4 @@
-import { Box, Chip, Paper, Stack, Typography } from '@mui/material';
+import { Box, Chip, Paper, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import type { MonthlyRevenuePoint, ProductCategory } from '../types/dashboard';
 
 export interface LineChartWidgetProps {
@@ -8,15 +8,38 @@ export interface LineChartWidgetProps {
   selectedCategories: ProductCategory[];
 }
 
+const NICE_STEPS = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+
+function niceStep(value: number): number {
+  if (!Number.isFinite(value) || value <= 0) return 1000;
+  const base = 10 ** Math.floor(Math.log10(value));
+  const fraction = value / base;
+  return (NICE_STEPS.find((candidate) => candidate >= fraction) ?? 10) * base;
+}
+
+function axisLabel(value: number): string {
+  if (value === 0) return '$0';
+  if (value >= 1000 && value % 1000 === 0) return `$${value / 1000}k`;
+  return `$${value.toLocaleString('en-US')}`;
+}
+
 export function LineChartWidget({
   title,
   subtitle,
   data,
   selectedCategories,
 }: LineChartWidgetProps) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const series = data.map((point) => {
     const total = selectedCategories.reduce((acc, cat) => acc + point[cat], 0);
-    return { month: point.month, value: total, isPartial: point.isPartial };
+    return {
+      month: point.month,
+      value: total,
+      isPartial: point.isPartial,
+      partialDays: point.partialDays,
+    };
   });
 
   const maxPoint = series.reduce(
@@ -24,11 +47,13 @@ export function LineChartWidget({
     series[0] ?? { month: '-', value: 0 }
   );
 
-  const maxScale = 60000;
-  const width = 620;
-  const height = 210;
-  const padLeft = 44;
-  const padRight = 18;
+  const maxValue = series.reduce((max, point) => Math.max(max, point.value), 0);
+  const step = niceStep(maxValue / 4);
+  const maxScale = step * 4;
+  const width = isMobile ? 340 : 620;
+  const height = isMobile ? 190 : 210;
+  const padLeft = isMobile ? 38 : 44;
+  const padRight = isMobile ? 12 : 18;
   const padTop = 16;
   const padBottom = 28;
   const plotW = width - padLeft - padRight;
@@ -48,7 +73,8 @@ export function LineChartWidget({
         },${padTop + plotH}`
       : '';
 
-  const yTicks = [0, 15000, 30000, 45000, 60000];
+  const yTicks = [0, step, step * 2, step * 3, maxScale];
+  const partialPoint = series.find((point) => point.isPartial);
 
   return (
     <Paper
@@ -65,10 +91,12 @@ export function LineChartWidget({
     >
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        justifyContent="space-between"
         spacing={1}
-        sx={{ mb: 1.5 }}
+        sx={{
+          mb: 1.5,
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: 'space-between',
+        }}
       >
         <Box>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0F172A' }}>
@@ -116,10 +144,10 @@ export function LineChartWidget({
                   x={padLeft - 8}
                   y={y + 4}
                   textAnchor="end"
-                  fontSize="10"
+                  fontSize={isMobile ? 9 : 10}
                   fill="#94A3B8"
                 >
-                  ${tick === 0 ? '0' : `${tick / 1000}k`}
+                  {axisLabel(tick)}
                 </text>
               </g>
             );
@@ -135,40 +163,48 @@ export function LineChartWidget({
             />
           )}
 
-          {coords.map((c) => (
-            <g key={c.month}>
-              <circle cx={c.x} cy={c.y} r="3" fill="#3B66F5" />
-              <text
-                x={c.x}
-                y={height - 6}
-                textAnchor="middle"
-                fontSize="10"
-                fontWeight={c.isPartial ? 700 : 500}
-                fill={c.isPartial ? '#3B66F5' : '#64748B'}
-              >
-                {c.month}
-              </text>
-            </g>
-          ))}
+          {coords.map((c, idx) => {
+            const visible = !isMobile || idx % 3 === 0 || Boolean(c.isPartial);
+            return (
+              <g key={c.month}>
+                <circle cx={c.x} cy={c.y} r="3" fill="#3B66F5" />
+                <text
+                  x={c.x}
+                  y={height - 6}
+                  textAnchor="middle"
+                  fontSize={isMobile ? 9 : 10}
+                  fontWeight={c.isPartial ? 700 : 500}
+                  fill={c.isPartial ? '#3B66F5' : '#64748B'}
+                  style={{ display: visible ? undefined : 'none' }}
+                >
+                  {c.month}
+                </text>
+              </g>
+            );
+          })}
         </svg>
       </Box>
 
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
-        justifyContent="space-between"
         spacing={0.5}
-        sx={{ mt: 1 }}
+        sx={{ mt: 1, justifyContent: 'space-between' }}
       >
-        <Stack direction="row" alignItems="center" spacing={0.75}>
+        <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
           <Box sx={{ width: 8, height: 8, borderRadius: 0.5, bgcolor: '#3B66F5' }} />
           <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.72rem' }}>
             Ingresos · Máximo en {maxPoint.month.toLowerCase()}: $
             {maxPoint.value.toLocaleString('en-US')}
           </Typography>
         </Stack>
-        <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.7rem' }}>
-          *Ene 24: período parcial, solo 1 día
-        </Typography>
+        {partialPoint && (
+          <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.7rem' }}>
+            *{partialPoint.month}: período parcial,{' '}
+            {partialPoint.partialDays === 1
+              ? 'solo 1 día'
+              : `${partialPoint.partialDays} días`}
+          </Typography>
+        )}
       </Stack>
     </Paper>
   );

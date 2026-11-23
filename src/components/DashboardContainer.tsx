@@ -1,15 +1,8 @@
-import { useState } from 'react';
 import { Box, Container, Stack, Typography } from '@mui/material';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
-import {
-  ALL_CATEGORIES,
-  CATEGORY_SUMMARIES,
-  MONTHLY_REVENUE_MOCK,
-  RECENT_TRANSACTIONS_MOCK,
-} from '../data/mockData';
-import type { ProductCategory } from '../types/dashboard';
+import { useDashboardFilters } from '../hooks/useDashboardFilters';
 import { Header } from './Header';
 import { FilterControls } from './FilterControls';
 import { KPICard } from './KPICard';
@@ -19,54 +12,29 @@ import { BarChartWidget } from './BarChartWidget';
 import { TransactionTable } from './TransactionTable';
 
 export function DashboardContainer() {
-  // Estados controlados mediante useState
-  const [startDate, setStartDate] = useState<string>('2023-01-01');
-  const [endDate, setEndDate] = useState<string>('2024-01-01');
-  const [selectedCategories, setSelectedCategories] =
-    useState<ProductCategory[]>(ALL_CATEGORIES);
-  const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false);
-
-  const handleToggleCategory = (category: ProductCategory) => {
-    setSelectedCategories((prev) => {
-      if (prev.includes(category)) {
-        // Evitar dejar 0 categorías seleccionadas
-        return prev.length > 1 ? prev.filter((item) => item !== category) : prev;
-      }
-      return [...prev, category];
-    });
-  };
-
-  const handleToggleAllCategories = () => {
-    setSelectedCategories(ALL_CATEGORIES);
-  };
-
-  // Cálculo reactivo de métricas según las categorías seleccionadas
-  const activeSummaries = CATEGORY_SUMMARIES.filter((item) =>
-    selectedCategories.includes(item.category)
-  );
-
-  const totalRevenue = activeSummaries.reduce((acc, item) => acc + item.revenue, 0);
-  const totalTransactions = activeSummaries.reduce(
-    (acc, item) => acc + item.transactions,
-    0
-  );
-  const totalUnits = activeSummaries.reduce(
-    (acc, item) => acc + item.maleUnits + item.femaleUnits,
-    0
-  );
-  const averageTicket = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
-
-  const filteredTransactions = RECENT_TRANSACTIONS_MOCK.filter(
-    (tx) =>
-      selectedCategories.includes(tx.productCategory) &&
-      tx.date >= startDate &&
-      tx.date <= endDate
-  );
+  const {
+    startDate,
+    endDate,
+    selectedCategories,
+    showMobileFilters,
+    activeSummaries,
+    monthlyRevenue,
+    recentTransactions,
+    totalRevenue,
+    totalTransactions,
+    totalUnits,
+    averageTicket,
+    onStartDateChange,
+    onEndDateChange,
+    onToggleCategory,
+    onToggleAllCategories,
+    onToggleMobileFilters,
+    onCloseMobileFilters,
+  } = useDashboardFilters();
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#F4F6FA', py: { xs: 2.5, md: 3.5 } }}>
       <Container maxWidth="xl">
-        {/* Cabecera y Filtros Globales */}
         <Box
           sx={{
             display: 'flex',
@@ -82,7 +50,7 @@ export function DashboardContainer() {
             title="Dashboard de ventas"
             subtitle="Una visión completa del rendimiento comercial."
             showMobileFilters={showMobileFilters}
-            onToggleFilters={() => setShowMobileFilters((prev) => !prev)}
+            onToggleFilters={onToggleMobileFilters}
           />
 
           <FilterControls
@@ -90,21 +58,24 @@ export function DashboardContainer() {
             endDate={endDate}
             selectedCategories={selectedCategories}
             isOpenMobile={showMobileFilters}
-            onStartDateChange={setStartDate}
-            onEndDateChange={setEndDate}
-            onToggleCategory={handleToggleCategory}
-            onToggleAllCategories={handleToggleAllCategories}
-            onCloseMobile={() => setShowMobileFilters(false)}
+            onStartDateChange={onStartDateChange}
+            onEndDateChange={onEndDateChange}
+            onToggleCategory={onToggleCategory}
+            onToggleAllCategories={onToggleAllCategories}
+            onCloseMobile={onCloseMobileFilters}
           />
         </Box>
 
-        {/* Fila de 3 Tarjetas KPI */}
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+            gridTemplateColumns: {
+              xs: 'minmax(0, 1fr)',
+              md: 'repeat(3, minmax(0, 1fr))',
+            },
             gap: 2.5,
             mb: 2.5,
+            '& > *': { minWidth: 0 },
           }}
         >
           <KPICard
@@ -136,19 +107,22 @@ export function DashboardContainer() {
           />
         </Box>
 
-        {/* Sección Central: Evolución Temporal y Participación por Categoría */}
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' },
+            gridTemplateColumns: {
+              xs: 'minmax(0, 1fr)',
+              lg: 'minmax(0, 2fr) minmax(0, 1fr)',
+            },
             gap: 2.5,
             mb: 2.5,
+            '& > *': { minWidth: 0 },
           }}
         >
           <LineChartWidget
             title="Ingresos en el tiempo"
             subtitle="Evolución mensual de los ingresos"
-            data={MONTHLY_REVENUE_MOCK}
+            data={monthlyRevenue}
             selectedCategories={selectedCategories}
           />
 
@@ -160,13 +134,16 @@ export function DashboardContainer() {
           />
         </Box>
 
-        {/* Sección Inferior: Comparativa Demográfica y Tabla de Transacciones */}
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: '5fr 7fr' },
+            gridTemplateColumns: {
+              xs: 'minmax(0, 1fr)',
+              lg: 'minmax(0, 5fr) minmax(0, 7fr)',
+            },
             gap: 2.5,
             mb: 2.5,
+            '& > *': { minWidth: 0 },
           }}
         >
           <BarChartWidget
@@ -178,17 +155,17 @@ export function DashboardContainer() {
           <TransactionTable
             title="Transacciones recientes"
             subtitle="Orden descendente por fecha e ID de transacción"
-            transactions={filteredTransactions}
+            transactions={recentTransactions}
             totalCount={totalTransactions}
+            startDate={startDate}
+            endDate={endDate}
           />
         </Box>
 
-        {/* Pie de página informativo */}
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
           spacing={0.5}
-          sx={{ pt: 1 }}
+          sx={{ pt: 1, justifyContent: 'space-between' }}
         >
           <Typography variant="caption" sx={{ color: '#94A3B8' }}>
             Fuente: Kaggle · Retail Sales Dataset

@@ -16,7 +16,15 @@ export function DonutChartWidget({
 }: DonutChartWidgetProps) {
   const radius = 58;
   const circumference = 2 * Math.PI * radius;
-  let accumulatedPercent = 0;
+  const ratios = categories.map((cat) =>
+    totalRevenue > 0 ? cat.revenue / totalRevenue : 0
+  );
+  const segments = categories.map((cat, idx) => ({
+    category: cat.category,
+    color: cat.color,
+    dash: ratios[idx] * circumference,
+    offset: -ratios.slice(0, idx).reduce((acc, val) => acc + val, 0) * circumference,
+  }));
 
   return (
     <Paper
@@ -42,12 +50,9 @@ export function DonutChartWidget({
 
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
-        alignItems="center"
-        justifyContent="space-between"
         spacing={2}
-        sx={{ my: 'auto' }}
+        sx={{ my: 'auto', alignItems: 'center', justifyContent: 'space-between' }}
       >
-        {/* Anillo SVG */}
         <Box sx={{ position: 'relative', width: 152, height: 152, flexShrink: 0 }}>
           <svg viewBox="0 0 152 152" width="152" height="152">
             <circle
@@ -58,27 +63,20 @@ export function DonutChartWidget({
               stroke="#F1F5F9"
               strokeWidth="16"
             />
-            {categories.map((cat) => {
-              const ratio = totalRevenue > 0 ? cat.revenue / totalRevenue : 0;
-              const dash = ratio * circumference;
-              const offset = -accumulatedPercent * circumference;
-              accumulatedPercent += ratio;
-
-              return (
-                <circle
-                  key={cat.category}
-                  cx="76"
-                  cy="76"
-                  r={radius}
-                  fill="none"
-                  stroke={cat.color}
-                  strokeWidth="16"
-                  strokeDasharray={`${Math.max(dash - 3, 0)} ${circumference}`}
-                  strokeDashoffset={offset}
-                  transform="rotate(-90 76 76)"
-                />
-              );
-            })}
+            {segments.map((seg) => (
+              <circle
+                key={seg.category}
+                cx="76"
+                cy="76"
+                r={radius}
+                fill="none"
+                stroke={seg.color}
+                strokeWidth="16"
+                strokeDasharray={`${Math.max(seg.dash - 3, 0)} ${circumference}`}
+                strokeDashoffset={seg.offset}
+                transform="rotate(-90 76 76)"
+              />
+            ))}
           </svg>
 
           <Box
@@ -101,7 +99,6 @@ export function DonutChartWidget({
           </Box>
         </Box>
 
-        {/* Leyenda con montos y porcentajes */}
         <Stack spacing={1.75} sx={{ flex: 1, width: '100%' }}>
           {categories.map((cat) => {
             const pct =
@@ -110,10 +107,12 @@ export function DonutChartWidget({
               <Stack
                 key={cat.category}
                 direction="row"
-                alignItems="flex-start"
-                justifyContent="space-between"
+                sx={{
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                }}
               >
-                <Stack direction="row" spacing={1} alignItems="flex-start">
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
                   <Box
                     sx={{
                       width: 8,

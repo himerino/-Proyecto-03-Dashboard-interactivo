@@ -23,13 +23,16 @@ export function KPICard({ title, value, unit, subtitle, icon }: KPICardProps) {
         justifyContent: 'space-between',
       }}
     >
-      <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+      <Stack
+        direction="row"
+        sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}
+      >
         <Box>
           <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 1 }}>
             {title}
           </Typography>
 
-          <Stack direction="row" alignItems="baseline" spacing={1} sx={{ mb: 0.75 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline', mb: 0.75 }}>
             <Typography
               variant="h4"
               sx={{

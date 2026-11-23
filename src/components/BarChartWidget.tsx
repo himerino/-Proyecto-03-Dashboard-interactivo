@@ -16,7 +16,10 @@ export function BarChartWidget({ title, subtitle, categories }: BarChartWidgetPr
     (sum, item) => sum + item.maleUnits + item.femaleUnits,
     0
   );
-  const maxBar = 500;
+  const maxBar = Math.max(
+    1,
+    ...ordered.map((cat) => Math.max(cat.maleUnits, cat.femaleUnits))
+  );
   const chartHeight = 140;
 
   return (
@@ -41,13 +44,13 @@ export function BarChartWidget({ title, subtitle, categories }: BarChartWidgetPr
         </Typography>
 
         <Stack direction="row" spacing={2}>
-          <Stack direction="row" alignItems="center" spacing={0.75}>
+          <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
             <Box sx={{ width: 8, height: 8, borderRadius: 0.5, bgcolor: '#3B66F5' }} />
             <Typography variant="caption" sx={{ color: '#475569', fontWeight: 500 }}>
               Hombre
             </Typography>
           </Stack>
-          <Stack direction="row" alignItems="center" spacing={0.75}>
+          <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
             <Box sx={{ width: 8, height: 8, borderRadius: 0.5, bgcolor: '#14B8A6' }} />
             <Typography variant="caption" sx={{ color: '#475569', fontWeight: 500 }}>
               Mujer
@@ -56,12 +59,11 @@ export function BarChartWidget({ title, subtitle, categories }: BarChartWidgetPr
         </Stack>
       </Box>
 
-      {/* Barras agrupadas por categoría */}
       <Stack
         direction="row"
-        alignItems="flex-end"
-        justifyContent="space-around"
         sx={{
+          alignItems: 'flex-end',
+          justifyContent: 'space-around',
           height: chartHeight + 48,
           pt: 3,
           pb: 1,
@@ -73,9 +75,9 @@ export function BarChartWidget({ title, subtitle, categories }: BarChartWidgetPr
           const femaleH = Math.round((cat.femaleUnits / maxBar) * chartHeight);
 
           return (
-            <Stack key={cat.category} alignItems="center" spacing={1}>
-              <Stack direction="row" alignItems="flex-end" spacing={0.75}>
-                <Stack alignItems="center" spacing={0.4}>
+            <Stack key={cat.category} spacing={1} sx={{ alignItems: 'center' }}>
+              <Stack direction="row" spacing={0.75} sx={{ alignItems: 'flex-end' }}>
+                <Stack spacing={0.4} sx={{ alignItems: 'center' }}>
                   <Typography
                     variant="caption"
                     sx={{ fontWeight: 700, fontSize: '0.7rem', color: '#334155' }}
@@ -93,7 +95,7 @@ export function BarChartWidget({ title, subtitle, categories }: BarChartWidgetPr
                   />
                 </Stack>
 
-                <Stack alignItems="center" spacing={0.4}>
+                <Stack spacing={0.4} sx={{ alignItems: 'center' }}>
                   <Typography
                     variant="caption"
                     sx={{ fontWeight: 700, fontSize: '0.7rem', color: '#334155' }}
@@ -122,9 +124,7 @@ export function BarChartWidget({ title, subtitle, categories }: BarChartWidgetPr
 
       <Stack
         direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mt: 1.5 }}
+        sx={{ mt: 1.5, justifyContent: 'space-between', alignItems: 'center' }}
       >
         <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.72rem' }}>
           Eje Y: unidades vendidas

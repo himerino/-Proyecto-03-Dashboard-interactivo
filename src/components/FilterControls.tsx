@@ -10,7 +10,7 @@ import {
   useTheme,
 } from '@mui/material';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { ALL_CATEGORIES } from '../data/mockData';
+import { ALL_CATEGORIES, DATA_MAX_DATE, DATA_MIN_DATE } from '../data/mockData';
 import type { ProductCategory } from '../types/dashboard';
 
 export interface FilterControlsProps {
@@ -49,31 +49,30 @@ export function FilterControls({
         gap: { xs: 2, lg: 2.5 },
       }}
     >
-      {/* Encabezado interno solo para tarjeta colapsable móvil */}
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ display: { xs: 'flex', lg: 'none' } }}
+        sx={{
+          display: { xs: 'flex', lg: 'none' },
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
       >
-        <Typography variant="subtitle1" fontWeight={700} color="#0F172A">
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0F172A' }}>
           Filtros
         </Typography>
         <Stack
           direction="row"
-          alignItems="center"
           spacing={0.5}
           onClick={onCloseMobile}
-          sx={{ cursor: 'pointer', color: '#3B66F5' }}
+          sx={{ cursor: 'pointer', color: '#3B66F5', alignItems: 'center' }}
         >
-          <Typography variant="caption" fontWeight={600}>
+          <Typography variant="caption" sx={{ fontWeight: 600 }}>
             Ocultar
           </Typography>
           <ExpandLessIcon fontSize="small" />
         </Stack>
       </Stack>
 
-      {/* Selectores de Fecha */}
       <Stack direction="row" spacing={1.5}>
         <Box sx={{ flex: 1, minWidth: { lg: 150 } }}>
           <Typography
@@ -88,6 +87,7 @@ export function FilterControls({
             fullWidth
             value={startDate}
             onChange={(e) => onStartDateChange(e.target.value)}
+            slotProps={{ htmlInput: { min: DATA_MIN_DATE, max: DATA_MAX_DATE } }}
             sx={{
               bgcolor: '#FFFFFF',
               '& .MuiOutlinedInput-root': { borderRadius: 2, fontSize: '0.85rem' },
@@ -108,6 +108,7 @@ export function FilterControls({
             fullWidth
             value={endDate}
             onChange={(e) => onEndDateChange(e.target.value)}
+            slotProps={{ htmlInput: { min: DATA_MIN_DATE, max: DATA_MAX_DATE } }}
             sx={{
               bgcolor: '#FFFFFF',
               '& .MuiOutlinedInput-root': { borderRadius: 2, fontSize: '0.85rem' },
@@ -116,14 +117,11 @@ export function FilterControls({
         </Box>
       </Stack>
 
-      {/* Selección múltiple de categorías */}
       <Box>
         <Stack
           direction="row"
-          alignItems="center"
-          justifyContent="space-between"
           spacing={2}
-          sx={{ mb: 0.5 }}
+          sx={{ mb: 0.5, alignItems: 'center', justifyContent: 'space-between' }}
         >
           <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 500 }}>
             Categoría · Selección múltiple
@@ -140,7 +138,6 @@ export function FilterControls({
             gap: 1,
           }}
         >
-          {/* Opción Todos */}
           <Box
             onClick={onToggleAllCategories}
             sx={{
@@ -173,7 +170,6 @@ export function FilterControls({
             </Typography>
           </Box>
 
-          {/* Categorías individuales */}
           {ALL_CATEGORIES.map((category) => {
             const active = selectedCategories.includes(category);
             return (

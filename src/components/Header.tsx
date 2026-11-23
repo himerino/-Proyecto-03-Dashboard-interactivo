@@ -21,11 +21,9 @@ export function Header({
     <Box sx={{ flex: 1 }}>
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ mb: 0.75 }}
+        sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}
       >
-        <Stack direction="row" alignItems="center" spacing={0.75}>
+        <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
           <ShowChartIcon sx={{ fontSize: 18, color: '#3B66F5' }} />
           <Typography
             variant="caption"
@@ -40,7 +38,6 @@ export function Header({
           </Typography>
         </Stack>
 
-        {/* Botón de embudo visible únicamente en vista móvil */}
         <IconButton
           onClick={onToggleFilters}
           aria-label="Mostrar u ocultar filtros"

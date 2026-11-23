@@ -18,6 +18,8 @@ export interface TransactionTableProps {
   subtitle: string;
   transactions: TransactionRecord[];
   totalCount: number;
+  startDate: string;
+  endDate: string;
 }
 
 const CATEGORY_BADGE_STYLES: Record<
@@ -39,6 +41,8 @@ export function TransactionTable({
   subtitle,
   transactions,
   totalCount,
+  startDate,
+  endDate,
 }: TransactionTableProps) {
   return (
     <Paper
@@ -55,10 +59,12 @@ export function TransactionTable({
     >
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        justifyContent="space-between"
         spacing={1}
-        sx={{ mb: 1.5 }}
+        sx={{
+          mb: 1.5,
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: 'space-between',
+        }}
       >
         <Box>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0F172A' }}>
@@ -81,6 +87,19 @@ export function TransactionTable({
           }}
         />
       </Stack>
+
+      {/* Pista de desplazamiento solo en vista vertical */}
+      <Typography
+        variant="caption"
+        sx={{
+          display: { xs: 'block', sm: 'none' },
+          color: '#94A3B8',
+          fontSize: '0.7rem',
+          mb: 1,
+        }}
+      >
+        Desliza para ver más columnas →
+      </Typography>
 
       <TableContainer sx={{ overflowX: 'auto' }}>
         <Table size="small">
@@ -158,16 +177,14 @@ export function TransactionTable({
 
       <Stack
         direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mt: 1.5 }}
+        sx={{ mt: 1.5, justifyContent: 'space-between', alignItems: 'center' }}
       >
         <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.72rem' }}>
           {Math.min(transactions.length, 8)} de {totalCount.toLocaleString('en-US')}{' '}
           transacciones
         </Typography>
         <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.72rem' }}>
-          28/12/2023 – 01/01/2024
+          {formatDisplayDate(startDate)} – {formatDisplayDate(endDate)}
         </Typography>
       </Stack>
     </Paper>
