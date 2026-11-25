@@ -1,6 +1,6 @@
 # Proyecto 03 – Dashboard interactivo
 
-Repositorio del proyecto de dashboard interactivo de ventas (*Retail Sales*). Incluye el dataset original en **CSV**, su versión transformada y validada en **JSON**, los **scripts en Python** de conversión y validación, y la **interfaz web responsiva** desarrollada con **React, TypeScript, Vite y Material UI**.
+Repositorio del proyecto de dashboard interactivo de ventas (*Retail Sales*). La **única fuente de datos de la aplicación** es **Firebase Realtime Database** (1000 registros importados desde el JSON del sprint 1). La **interfaz web responsiva** está desarrollada con **React, TypeScript, Vite y Material UI**.
 
 ---
 
@@ -10,7 +10,7 @@ Repositorio del proyecto de dashboard interactivo de ventas (*Retail Sales*). In
 -Proyecto-03-Dashboard-interactivo/
 ├── data/
 │   ├── retail_sales_dataset.csv      # Fuente original (1000 registros)
-│   └── retail_sales_dataset.json     # Resultado de la transformación (1000 registros)
+│   └── retail_sales_dataset.json     # Archivo generado en el sprint 1 e importado a Firebase
 ├── scripts/
 │   ├── csv_to_json.py                # Transforma y valida el CSV → JSON
 │   └── validate_json.py              # Valida el JSON resultante
@@ -25,10 +25,17 @@ Repositorio del proyecto de dashboard interactivo de ventas (*Retail Sales*). In
 │   │   ├── BarChartWidget.tsx        # Gráfico de barras agrupadas (categoría y género)
 │   │   └── TransactionTable.tsx      # Tabla de transacciones recientes
 │   ├── data/
-│   │   └── mockData.ts               # Datos estructurados de prueba para la interfaz
+│   │   └── constants.ts              # Categorías y colores (constantes de la interfaz)
+│   ├── firebase/
+│   │   └── firebase.ts               # Configuración e inicialización de Firebase
+│   ├── hooks/
+│   │   ├── useTransactions.ts        # Hook personalizado: useEffect + useState (datos, loading, error)
+│   │   └── useDashboardFilters.ts    # Filtros y métricas derivadas de los registros
+│   ├── services/
+│   │   └── transactionsService.ts    # Servicio de acceso a datos (ref → get → val)
 │   ├── types/
 │   │   └── dashboard.ts              # Interfaces y tipos estáticos en TypeScript
-│   ├── App.tsx                       # Configuración de tema y CssBaseline de Material UI
+│   ├── App.tsx                       # Integración del hook, tema y CssBaseline de Material UI
 │   └── main.tsx                      # Punto de entrada de la aplicación React
 ├── index.html                        # Plantilla HTML principal de Vite
 ├── package.json                      # Dependencias y scripts de Node.js
@@ -60,24 +67,22 @@ Repositorio del proyecto de dashboard interactivo de ventas (*Retail Sales*). In
 
 ---
 
-## 3. Estructura del JSON resultante
+## 3. Estructura de los datos en Realtime Database
 
-`data/retail_sales_dataset.json` es un arreglo de 1000 objetos con esta forma:
+Los 1000 registros viven en la **raíz** de Firebase Realtime Database (`https://proyecto3g7-default-rtdb.firebaseio.com/`). Cada registro tiene esta forma:
 
 ```json
-[
-  {
-    "transactionId": 1,
-    "date": "2023-11-24",
-    "customerId": "CUST001",
-    "gender": "Male",
-    "age": 34,
-    "productCategory": "Beauty",
-    "quantity": 3,
-    "pricePerUnit": 50,
-    "totalAmount": 150
-  }
-]
+{
+  "transactionId": 1,
+  "date": "2023-11-24",
+  "customerId": "CUST001",
+  "gender": "Male",
+  "age": 34,
+  "productCategory": "Beauty",
+  "quantity": 3,
+  "pricePerUnit": 50,
+  "totalAmount": 150
+}
 ```
 
 Notas:
@@ -90,7 +95,7 @@ Notas:
 
 ## 4. Procesamiento y validación de datos (Python)
 
-Requiere **Python 3.8 o superior**. Desde la raíz del repositorio:
+Requiere **Python 3.8 o superior**. Este proceso generó el archivo que se importó a Firebase Realtime Database en el sprint 2 (ya no se usa como fuente de datos de la aplicación). Desde la raíz del repositorio:
 
 ```bash
 # Generar data/retail_sales_dataset.json a partir del CSV
@@ -115,6 +120,14 @@ python3 scripts/validate_json.py
 - **Filtrado reactivo con `useState`:** Selección de rango de fechas (`Desde` / `Hasta`) y filtrado múltiple por categoría (`Todos`, `Beauty`, `Clothing`, `Electronics`) que recalcula en tiempo real las tarjetas KPI, los gráficos y la tabla.
 - **Visualizaciones estadísticas:** Tres tarjetas de indicadores (*Ingresos Totales*, *Volumen de Ventas* y *Ticket Promedio*), gráfico de evolución mensual, gráfico de dona por participación de categoría, gráfico de barras agrupadas por género y tabla de transacciones recientes.
 - **Diseño responsivo (Desktop y Mobile):** Distribución en cuadrícula para escritorio y adaptación a columna única en dispositivos móviles, ocultando los filtros bajo un botón desplegable en la cabecera para optimizar el espacio vertical.
+
+### Integración con Firebase Realtime Database
+
+- **`src/firebase/firebase.ts`:** inicializa la app con `initializeApp(firebaseConfig)` y exporta la instancia de la base con `getDatabase(app)`. Declara `databaseURL` explícita (`https://proyecto3g7-default-rtdb.firebaseio.com/`).
+- **`src/services/transactionsService.ts`:** servicio de acceso a datos. `obtenerTransacciones(ruta)` crea la referencia con `ref(database, ruta)`, lee una sola vez con `get(referencia)` y retorna `snapshot.val()` si `snapshot.exists()`, o `null` en caso contrario. Los componentes nunca importan el SDK de Firebase directamente.
+- **`src/hooks/useTransactions.ts`:** hook personalizado. Recibe la ruta, declara `useState` para los registros, `loading` y `error`, y dentro de `useEffect` llama a la función asincrónica `cargarDatos()`; la ruta va en el arreglo de dependencias.
+- **`src/App.tsx`:** ejecuta el hook al montar, muestra un indicador de carga mientras Firebase responde, un mensaje de error si la consulta falla y el dashboard cuando los datos están disponibles.
+- **Reglas de seguridad:** la base está configurada en **solo lectura** (`read: true, write: false`), de modo que la consulta anónima funciona pero cualquier escritura retorna `permission_denied`.
 
 ### Instalación y ejecución local
 

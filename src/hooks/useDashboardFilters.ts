@@ -1,11 +1,5 @@
-import { useState } from 'react';
-import {
-  ALL_CATEGORIES,
-  CATEGORY_COLORS,
-  DATA_MAX_DATE,
-  DATA_MIN_DATE,
-  TRANSACTIONS,
-} from '../data/mockData';
+import { useEffect, useMemo, useState } from 'react';
+import { ALL_CATEGORIES, CATEGORY_COLORS } from '../data/constants';
 import type {
   CategorySummary,
   MonthlyRevenuePoint,
@@ -28,11 +22,20 @@ const MONTH_LABELS = [
   'Dic',
 ];
 
-function clampDate(value: string, fallback: string): string {
+function clampDate(value: string, fallback: string, min: string, max: string): string {
   if (!value) return fallback;
-  if (value < DATA_MIN_DATE) return DATA_MIN_DATE;
-  if (value > DATA_MAX_DATE) return DATA_MAX_DATE;
+  if (min && value < min) return min;
+  if (max && value > max) return max;
   return value;
+}
+
+function dateBounds(rows: TransactionRecord[]): { min: string; max: string } {
+  if (rows.length === 0) return { min: '', max: '' };
+  const dates = rows.map((tx) => tx.date);
+  return {
+    min: dates.reduce((min, date) => (date < min ? date : min)),
+    max: dates.reduce((max, date) => (date > max ? date : max)),
+  };
 }
 
 function monthsBetween(startDate: string, endDate: string): string[] {
@@ -66,6 +69,8 @@ function buildMonthlySeries(
   startDate: string,
   endDate: string
 ): MonthlyRevenuePoint[] {
+  if (!startDate || !endDate) return [];
+
   const byMonth = new Map<string, TransactionRecord[]>();
   rows.forEach((tx) => {
     const key = tx.date.slice(0, 7);
@@ -122,21 +127,37 @@ function summarize(
     .sort((a, b) => b.revenue - a.revenue);
 }
 
-export function useDashboardFilters() {
-  const [startDate, setStartDate] = useState<string>(DATA_MIN_DATE);
-  const [endDate, setEndDate] = useState<string>(DATA_MAX_DATE);
+export function useDashboardFilters(transactions: TransactionRecord[]) {
+  const { min: dataMinDate, max: dataMaxDate } = useMemo(
+    () => dateBounds(transactions),
+    [transactions]
+  );
+
+  const [startDate, setStartDate] = useState<string>(dataMinDate);
+  const [endDate, setEndDate] = useState<string>(dataMaxDate);
   const [selectedCategories, setSelectedCategories] =
     useState<ProductCategory[]>(ALL_CATEGORIES);
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false);
 
+  // Ajusta el rango de fechas cuando llegan (o cambian) los datos de Firebase.
+  useEffect(() => {
+    if (!dataMinDate || !dataMaxDate) return;
+    setStartDate((prev) =>
+      prev && prev >= dataMinDate && prev <= dataMaxDate ? prev : dataMinDate
+    );
+    setEndDate((prev) =>
+      prev && prev >= dataMinDate && prev <= dataMaxDate ? prev : dataMaxDate
+    );
+  }, [dataMinDate, dataMaxDate]);
+
   const onStartDateChange = (value: string) => {
-    const next = clampDate(value, startDate);
+    const next = clampDate(value, startDate, dataMinDate, dataMaxDate);
     setStartDate(next);
     if (next > endDate) setEndDate(next);
   };
 
   const onEndDateChange = (value: string) => {
-    const next = clampDate(value, endDate);
+    const next = clampDate(value, endDate, dataMinDate, dataMaxDate);
     setEndDate(next);
     if (next < startDate) setStartDate(next);
   };
@@ -154,7 +175,7 @@ export function useDashboardFilters() {
   const onToggleMobileFilters = () => setShowMobileFilters((prev) => !prev);
   const onCloseMobileFilters = () => setShowMobileFilters(false);
 
-  const filtered = TRANSACTIONS.filter(
+  const filtered = transactions.filter(
     (tx) =>
       selectedCategories.includes(tx.productCategory) &&
       tx.date >= startDate &&
@@ -175,6 +196,8 @@ export function useDashboardFilters() {
   return {
     startDate,
     endDate,
+    minDate: dataMinDate,
+    maxDate: dataMaxDate,
     selectedCategories,
     showMobileFilters,
     totalRevenue,

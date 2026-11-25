@@ -3,6 +3,7 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import { useDashboardFilters } from '../hooks/useDashboardFilters';
+import type { TransactionRecord } from '../types/dashboard';
 import { Header } from './Header';
 import { FilterControls } from './FilterControls';
 import { KPICard } from './KPICard';
@@ -11,10 +12,16 @@ import { DonutChartWidget } from './DonutChartWidget';
 import { BarChartWidget } from './BarChartWidget';
 import { TransactionTable } from './TransactionTable';
 
-export function DashboardContainer() {
+interface DashboardContainerProps {
+  transactions: TransactionRecord[];
+}
+
+export function DashboardContainer({ transactions }: DashboardContainerProps) {
   const {
     startDate,
     endDate,
+    minDate,
+    maxDate,
     selectedCategories,
     showMobileFilters,
     activeSummaries,
@@ -30,7 +37,7 @@ export function DashboardContainer() {
     onToggleAllCategories,
     onToggleMobileFilters,
     onCloseMobileFilters,
-  } = useDashboardFilters();
+  } = useDashboardFilters(transactions);
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#F4F6FA', py: { xs: 2.5, md: 3.5 } }}>
@@ -56,6 +63,8 @@ export function DashboardContainer() {
           <FilterControls
             startDate={startDate}
             endDate={endDate}
+            minDate={minDate}
+            maxDate={maxDate}
             selectedCategories={selectedCategories}
             isOpenMobile={showMobileFilters}
             onStartDateChange={onStartDateChange}

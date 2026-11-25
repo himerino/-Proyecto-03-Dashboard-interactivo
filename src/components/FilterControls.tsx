@@ -10,12 +10,14 @@ import {
   useTheme,
 } from '@mui/material';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { ALL_CATEGORIES, DATA_MAX_DATE, DATA_MIN_DATE } from '../data/mockData';
+import { ALL_CATEGORIES } from '../data/constants';
 import type { ProductCategory } from '../types/dashboard';
 
 export interface FilterControlsProps {
   startDate: string;
   endDate: string;
+  minDate: string;
+  maxDate: string;
   selectedCategories: ProductCategory[];
   isOpenMobile: boolean;
   onStartDateChange: (value: string) => void;
@@ -28,6 +30,8 @@ export interface FilterControlsProps {
 export function FilterControls({
   startDate,
   endDate,
+  minDate,
+  maxDate,
   selectedCategories,
   isOpenMobile,
   onStartDateChange,
@@ -87,7 +91,7 @@ export function FilterControls({
             fullWidth
             value={startDate}
             onChange={(e) => onStartDateChange(e.target.value)}
-            slotProps={{ htmlInput: { min: DATA_MIN_DATE, max: DATA_MAX_DATE } }}
+            slotProps={{ htmlInput: { min: minDate, max: maxDate } }}
             sx={{
               bgcolor: '#FFFFFF',
               '& .MuiOutlinedInput-root': { borderRadius: 2, fontSize: '0.85rem' },
@@ -108,7 +112,7 @@ export function FilterControls({
             fullWidth
             value={endDate}
             onChange={(e) => onEndDateChange(e.target.value)}
-            slotProps={{ htmlInput: { min: DATA_MIN_DATE, max: DATA_MAX_DATE } }}
+            slotProps={{ htmlInput: { min: minDate, max: maxDate } }}
             sx={{
               bgcolor: '#FFFFFF',
               '& .MuiOutlinedInput-root': { borderRadius: 2, fontSize: '0.85rem' },
